@@ -45,7 +45,7 @@ def get_accuracy(outputs,labels):
     
     '''
 
-    acc2=(outputs==labels).float().squeeze().detach().numpy()
+    acc2=(outputs==labels).cpu().float().squeeze().detach().numpy()
     # print(acc2)
 #
 
