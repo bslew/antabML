@@ -52,7 +52,7 @@ class antab_trainer():
             self.deviceName=args.device
             self.device=args.device
 
-        if args.vebosity>2:
+        if args.verbose>2:
             self.logger.info("Using devide: {}".format(self.device))
 
 
