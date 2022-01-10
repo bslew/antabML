@@ -267,6 +267,8 @@ class antab_trainer():
             net= ann_models.DenseFF([args.dsize, args.dsize,args.dsize,args.dsize,args.dsize], nntype='autoenc') 
             lossfn= nn.MSELoss()
 
+        net.to(self.device)
+
         Nparam,Names=utils.ANN_parameter_count(net, trainable_only=True)
         for name, param in zip(Names,Nparam):
             logger.info("layer name: {}, params count: {}".format(name,param))
