@@ -180,6 +180,11 @@ class antab_loader(Dataset):
         file_path=self.get_path(index)
 
         status=False
+        # if self.model=='conv1d':
+        #     x,y,status=load_train_wisdom(file_path)
+        #     file_path=self.get_path(random.randint(0,len(self.files_list)-1))
+        #     return torch.from_numpy(x).float(), torch.from_numpy(y).float()
+        
         while not status:
             # print('Trying to load data from file: {}'.format(file_path))
             x,y,status=load_train_wisdom(file_path, len=self.dsize)

@@ -25,7 +25,8 @@ class Conv1(nn.Module):
                 self.fc.append(nn.Linear(conf[i-1], s))
 
         C=64
-        self.conv1=nn.Conv1d(1,C,3)
+        k=64
+        self.conv1=nn.Conv1d(1,C,k)
         self.init_network()
 
     def init_network(self):

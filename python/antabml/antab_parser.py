@@ -77,6 +77,11 @@ USAGE
                             required=False,
                             default='../../models/lstm')
 
+        parser.add_argument('--chkpt_save', type=int, 
+                            help='save ckp file every this epoch [default: %(default)s]', 
+                            required=False,
+                            default=50)
+
         parser.add_argument('--model', type=str, 
                             help='model name [default: %(default)s]', 
                             required=False,
@@ -104,6 +109,21 @@ USAGE
                             Use empty string to skip MLflow logging''')
         parser.add_argument('--MLflow_exp_name',type=str,default='',help='MLflow experiment name. If empty will generate name using datetime')
         parser.add_argument('--MLflow_run_name',type=str,default='',help='MLflow run name.')
+
+        '''
+        inference options
+        '''
+        parser.add_argument('--model_file', type=str, 
+                            help='path to trained model. Used for inference [default: %(default)s]', 
+                            required=False,
+                            default='../../models/model.pth')
+
+        parser.add_argument('--test_file', type=str, 
+                            help='path to awpkl file [default: %(default)s]. Eg. "../../data/train/blew-May-Jun21-ec077dtr.01.awpkl"', 
+                            required=False,
+                            default='')
+        
+
 
         # parser.add_argument('--title',type=str,default='', help='''
         # Plot title

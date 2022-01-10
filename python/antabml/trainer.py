@@ -201,6 +201,80 @@ class antab_trainer():
                 ))
         return {'loss': bloss, 'acc' : bacc}
 
+    def load_trained_model(self):
+    # def load_trained_model(self,checkpoint_file='', **kwargs):
+        '''
+        load classification model from directory
+        
+        parameters
+        ----------
+            checkpoint_file - if provided model is loaded from checkpoint file rather than from
+                        default model.pth file
+            
+        returns
+        -------
+            model
+            
+        This also sets self.cls2idx and self.idx2cls
+        '''
+        
+        trained_model_file_name=self.args.model_file
+        state=torch.load(
+                trained_model_file_name,
+                map_location=torch.device(self.device))
+
+        trainConfig=state['train_config']
+        self.trainConfig=trainConfig
+        args=self.args
+        # args['model']=trainConfig['model']
+        # args['dsize']=trainConfig['dsize']
+
+        self.net=self.get_model(trainConfig['model'],trainConfig['dsize'])
+        self.net.to(device=self.device)
+            
+        self.logger.info("Loading model from: {}".format(trained_model_file_name))
+        
+        # trained_model_file_name=os.path.join(model_dir,self.trained_model_file_name) if checkpoint_file=='' else checkpoint_file
+            
+        # if checkpoint_file=='':
+        self.net.load_state_dict(state['model_state_dict'])
+        # else:
+        #     self.model.load_state_dict(state['model_state_dict'])
+        self.net.eval()
+        # self.nclass=len(self.cls2idx)
+        self.logger.info("Loaded model train config: {}".format(trainConfig))
+        return self.net
+        
+    def inference(self):
+        '''
+        '''
+        args=self.args
+        x,y,status=loaders.load_train_wisdom(args.test_file,len=self.trainConfig['dsize'])
+        x=torch.from_numpy(x).float()
+        y=torch.from_numpy(y).float()
+        o=None
+        if status==True:
+            o,_=self.net(x)
+        return {'input':x.detach().numpy(),'target': y.detach().numpy(),'output':o.detach().numpy(), 'status':status }
+       
+
+    def get_model(self,model_name,dsize):
+        args=self.args
+        net=None
+        if model_name=='class':
+            net= ann_models.DenseFF([dsize, dsize,dsize,dsize,dsize//2,dsize//4,1]).to(self.device)
+        elif model_name=='lstm':
+            net= nn.LSTM(dsize, dsize, batch_first=True).to(self.device)
+        elif model_name=='autoenc':
+            net= ann_models.DenseFF([dsize, dsize//8,dsize//16,dsize//8,dsize], nntype='autoenc').to(self.device) 
+            # net= ann_models.DenseFF([args.dsize, args.dsize,args.dsize,args.dsize,args.dsize], nntype='autoenc').to(self.device) 
+        elif model_name=='dense':
+            net= ann_models.DenseFF([dsize, dsize,dsize,dsize,dsize], nntype='dense').to(self.device) 
+            # lossfn= nn.MSELoss().to(self.device)
+        elif model_name=='conv1d':
+            # net= ann_models.Conv1([args.dsize, args.dsize//2,args.dsize//4]).to(self.device) 
+            net= ann_models.Conv1([dsize]).to(self.device) 
+        return net
     
     def train_model(self):
         '''
@@ -244,6 +318,7 @@ class antab_trainer():
                                 num_workers=args.load_workers)
 
         trainConfig['DSsize']=len(DS)
+        trainConfig['dsize']=args.dsize
         trainConfig['DSsplit']=args.split
         trainConfig['split_seed']=args.split_seed
         trainConfig['Ntrain']=Ntrain
@@ -259,25 +334,18 @@ class antab_trainer():
             lossfn= nn.L1Loss().to(self.device)
         elif args.loss=='smoothL1':
             lossfn= nn.SmoothL1Loss().to(self.device)
-        
+            
         if args.model=='class':
-            net= ann_models.DenseFF([args.dsize, args.dsize,args.dsize,args.dsize,args.dsize//2,args.dsize//4,1]).to(self.device)
             lossfn= nn.BCELoss().to(self.device)
         elif args.model=='lstm':
-            net= nn.LSTM(args.dsize, args.dsize, batch_first=True).to(self.device)
             lossfn= nn.NLLLoss().to(self.device)
-        elif args.model=='autoenc':
-            # net= ann_models.DenseFF([args.dsize, args.dsize//2,args.dsize//4,args.dsize//4,args.dsize//2,args.dsize]) 
-            # net= ann_models.DenseFF([args.dsize, args.dsize*2,args.dsize*4,args.dsize*4,args.dsize*2,args.dsize,1]) 
-            # net= ann_models.DenseFF([args.dsize, args.dsize//2,args.dsize//4,args.dsize//8,args.dsize//4,args.dsize//2,args.dsize]) 
-            net= ann_models.DenseFF([args.dsize, args.dsize//8,args.dsize//16,args.dsize//8,args.dsize], nntype='autoenc').to(self.device) 
-            # net= ann_models.DenseFF([args.dsize, args.dsize,args.dsize,args.dsize,args.dsize], nntype='autoenc').to(self.device) 
-        elif args.model=='dense':
-            net= ann_models.DenseFF([args.dsize, args.dsize,args.dsize,args.dsize,args.dsize], nntype='dense').to(self.device) 
-            # lossfn= nn.MSELoss().to(self.device)
-        elif args.model=='conv1d':
-            net= ann_models.Conv1([args.dsize, args.dsize//2,args.dsize//4]).to(self.device) 
+            
+            
+        trainConfig['loss']=args.loss
 
+        trainConfig['model']=args.model
+        
+        net=self.get_model(args.model,args.dsize)
         Nparam,Names=utils.ANN_parameter_count(net, trainable_only=True)
         for name, param in zip(Names,Nparam):
             logger.info("layer name: {}, params count: {}".format(name,param))
@@ -294,7 +362,6 @@ class antab_trainer():
                               momentum=trainConfig['optimizer_momentum'])
         
         
-
         train_hist=stats.Train_History_EpochLossAcc('Train DS')
         valid_hist=stats.Train_History_EpochLossAcc('Valid DS')
 
@@ -334,20 +401,17 @@ class antab_trainer():
                               train_stats['acc'],
                               )
     
-#             if epoch % args.chkpt_save == 0:
-#                 # save checkpoint
-#                 chkpoint_file=os.path.join(args.model_dir,"model.ckp_%i" % epoch)
-#                 logger.info("Saving check point to file: {}".format(chkpoint_file))
-#                 torch.save({
-#                         'epoch': epoch,
-#                         'model_state_dict': net.state_dict(),
-#                         'optimizer_state_dict': optimizer.state_dict(),
-# #                         'loss': train_hist.last('loss')
-#                         'loss': lossfn.state_dict(),
-#                         'acc' : train_stats,
-#                         }, 
-#                         chkpoint_file
-#                 )
+            if epoch % args.chkpt_save == 0:
+                # save checkpoint
+                chkpoint_file=os.path.join(args.model_dir,"model.ckp_%i" % epoch)
+                logger.info("Saving check point to file: {}".format(chkpoint_file))
+                torch.save({
+                        'train_config': trainConfig,
+                        'epoch': epoch,
+                        'model_state_dict': net.state_dict(),
+                        'optimizer_state_dict': optimizer.state_dict(),
+                        'loss': train_hist.last('loss')
+                        }, chkpoint_file)    
                 
     
     
@@ -387,6 +451,16 @@ class antab_trainer():
         model_file_name=os.path.join(args.model_dir,"model.pth")
         logger.info("Saving model to: {}".format(model_file_name))
         torch.save(net.state_dict(),model_file_name)
+
+        chkpoint_file=os.path.join(args.model_dir,"model.ckp")
+        torch.save({
+                'train_config': trainConfig,
+                'epoch': args.epochs,
+                'model_state_dict': net.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'loss': train_hist.last('loss')
+                }, chkpoint_file)    
+
 
         hist_file_name=os.path.join(args.model_dir,"train_hist.txt")
         train_hist.save(hist_file_name)
