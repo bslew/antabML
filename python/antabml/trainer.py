@@ -191,7 +191,7 @@ class antab_trainer():
             
         bloss=loss.item()
         # bacc=np.mean(stats.vec_dist_norm2().calc(outputs,targets))
-        bacc=np.mean(stats.get_accuracy(outputs,targets))
+        bacc=np.mean(stats.get_accuracy(outputs,targets.to(self.device)))
 
 
         if self.args.verbose>1:
