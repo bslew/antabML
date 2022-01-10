@@ -52,6 +52,9 @@ class antab_trainer():
             self.deviceName=args.device
             self.device=args.device
 
+        if args.vebosity>2:
+            self.logger.info("Using devide: {}".format(self.device))
+
 
         #
         # MLflow stuff
