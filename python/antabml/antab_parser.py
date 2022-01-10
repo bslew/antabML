@@ -85,7 +85,7 @@ USAGE
         parser.add_argument('--loss', type=str, 
                             help='loss function name [default: %(default)s]', 
                             required=False,
-                            default='L1',
+                            default='smoothL1',
                             choices=['smoothL1','L1','MSE'])
 
         parser.add_argument('--epochs', type=int, help='Number of epochs during training [default: %(default)s]', default=100)
