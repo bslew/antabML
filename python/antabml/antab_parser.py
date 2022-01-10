@@ -82,6 +82,11 @@ USAGE
                             required=False,
                             default='class',
                             choices=['class','autoenc','lstm','dense','conv1d'])
+        parser.add_argument('--loss', type=str, 
+                            help='loss function name [default: %(default)s]', 
+                            required=False,
+                            default='L1',
+                            choices=['smoothL1','L1','MSE'])
 
         parser.add_argument('--epochs', type=int, help='Number of epochs during training [default: %(default)s]', default=100)
         parser.add_argument('--bs', type=int, help='batch size [default: %(default)s]', default=10000)
