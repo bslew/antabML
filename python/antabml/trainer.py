@@ -254,20 +254,19 @@ class antab_trainer():
 
         lossfn=None
         if args.model=='class':
-            net= ann_models.DenseFF([args.dsize, args.dsize,args.dsize,args.dsize,args.dsize//2,args.dsize//4,1]) 
-            lossfn= nn.BCELoss()
+            net= ann_models.DenseFF([args.dsize, args.dsize,args.dsize,args.dsize,args.dsize//2,args.dsize//4,1]).to(self.device)
+            lossfn= nn.BCELoss().to(self.device)
         elif args.model=='lstm':
-            net= nn.LSTM(args.dsize, args.dsize, batch_first=True) 
-            lossfn= nn.NLLLoss()
+            net= nn.LSTM(args.dsize, args.dsize, batch_first=True).to(self.device)
+            lossfn= nn.NLLLoss().to(self.device)
         elif args.model=='autoenc':
             # net= ann_models.DenseFF([args.dsize, args.dsize//2,args.dsize//4,args.dsize//4,args.dsize//2,args.dsize]) 
             # net= ann_models.DenseFF([args.dsize, args.dsize*2,args.dsize*4,args.dsize*4,args.dsize*2,args.dsize,1]) 
             # net= ann_models.DenseFF([args.dsize, args.dsize//2,args.dsize//4,args.dsize//8,args.dsize//4,args.dsize//2,args.dsize]) 
-            net= ann_models.DenseFF([args.dsize, args.dsize//8,args.dsize//16,args.dsize//8,args.dsize]) 
-            net= ann_models.DenseFF([args.dsize, args.dsize,args.dsize,args.dsize,args.dsize], nntype='autoenc') 
-            lossfn= nn.MSELoss()
+            net= ann_models.DenseFF([args.dsize, args.dsize//8,args.dsize//16,args.dsize//8,args.dsize]).to(self.device) 
+            net= ann_models.DenseFF([args.dsize, args.dsize,args.dsize,args.dsize,args.dsize], nntype='autoenc').to(self.device) 
+            lossfn= nn.MSELoss().to(self.device)
 
-        net=net.to(self.device)
 
         Nparam,Names=utils.ANN_parameter_count(net, trainable_only=True)
         for name, param in zip(Names,Nparam):
