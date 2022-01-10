@@ -196,6 +196,8 @@ class antab_loader(Dataset):
             return torch.from_numpy(x).float(), torch.tensor(y[0]==x[0]).float()
         elif self.model=='autoenc':
             return torch.from_numpy(x).float(), torch.from_numpy(x).float()
+        elif self.model=='dense':
+            return torch.from_numpy(x).float(), torch.from_numpy(y).float()
             
         return None
         

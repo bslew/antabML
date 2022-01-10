@@ -78,7 +78,7 @@ USAGE
                             help='model name [default: %(default)s]', 
                             required=False,
                             default='class',
-                            choices=['class','autoenc','lstm'])
+                            choices=['class','autoenc','lstm','dense'])
 
         parser.add_argument('--epochs', type=int, help='Number of epochs during training [default: %(default)s]', default=100)
         parser.add_argument('--bs', type=int, help='batch size [default: %(default)s]', default=10000)

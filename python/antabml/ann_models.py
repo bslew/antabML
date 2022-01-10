@@ -70,6 +70,8 @@ class DenseFF(nn.Module):
                     x = F.softmax(fc(x),dim=-1) # don't relu on the last layer
             elif self.nntype=='autoenc':
                 x = F.relu(fc(x))
+            elif self.nntype=='dense':
+                x = F.relu(fc(x))
                 
         return x,None
         

@@ -266,6 +266,9 @@ class antab_trainer():
             net= ann_models.DenseFF([args.dsize, args.dsize//8,args.dsize//16,args.dsize//8,args.dsize]).to(self.device) 
             net= ann_models.DenseFF([args.dsize, args.dsize,args.dsize,args.dsize,args.dsize], nntype='autoenc').to(self.device) 
             lossfn= nn.MSELoss().to(self.device)
+        elif args.model=='dense':
+            net= ann_models.DenseFF([args.dsize, args.dsize,args.dsize,args.dsize,args.dsize], nntype='dense').to(self.device) 
+            lossfn= nn.MSELoss().to(self.device)
 
 
         Nparam,Names=utils.ANN_parameter_count(net, trainable_only=True)
