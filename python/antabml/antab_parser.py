@@ -25,6 +25,9 @@ Examples:
 
 python ./train_antab.py --bs 1024 --model autoenc --model_dir ../../models/autoenc  --train_dir ../../data/train/
  
+ 
+python ./train_antab.py --bs 1024 --epoch 10000 --model dense --model_dir ../../models/denseFF/ --train_dir ../../data/train/ --load_worker 5
+
 '''
     program_license = '''%s
 
@@ -78,7 +81,7 @@ USAGE
                             help='model name [default: %(default)s]', 
                             required=False,
                             default='class',
-                            choices=['class','autoenc','lstm','dense'])
+                            choices=['class','autoenc','lstm','dense','conv1d'])
 
         parser.add_argument('--epochs', type=int, help='Number of epochs during training [default: %(default)s]', default=100)
         parser.add_argument('--bs', type=int, help='batch size [default: %(default)s]', default=10000)

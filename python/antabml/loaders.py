@@ -198,6 +198,8 @@ class antab_loader(Dataset):
             return torch.from_numpy(x).float(), torch.from_numpy(x).float()
         elif self.model=='dense':
             return torch.from_numpy(x).float(), torch.from_numpy(y).float()
+        elif self.model=='conv1d':
+            return torch.from_numpy(x).float(), torch.from_numpy(y).float()
             
         return None
         

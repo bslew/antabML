@@ -10,6 +10,51 @@ import torch.nn.functional as F
 # import os
 # import sys
 
+class Conv1(nn.Module):
+    def __init__(self, conf=[1024,512,256], nntype='conv1d'):
+        '''
+        '''
+        super().__init__()
+        self.nntype=nntype
+        self.conf=conf
+
+        self.fc=nn.ModuleList()
+ 
+        for i,s in enumerate(conf):
+            if i>0:
+                self.fc.append(nn.Linear(conf[i-1], s))
+
+        C=64
+        self.conv1=nn.Conv1d(1,C,3)
+        self.init_network()
+
+    def init_network(self):
+        for L in self.fc:
+            # L.weight.data.uniform_(0.0, 1.0)
+            L.bias.data.fill_(0.0)
+            nn.init.xavier_uniform_(L.weight)
+    
+        
+        
+    def forward(self,x):
+        n=len(self.fc)
+        for i,fc in enumerate(self.fc,1):
+            if self.nntype=='conv1d':
+                if i<n:
+                    x = F.relu(fc(x))
+
+
+        x = x.view(x.size(0),1, -1)
+        x=F.relu(self.conv1(x))
+        x = x.view(x.size(0), -1)
+
+        lastLinear=nn.Linear(x.size(-1),self.conf[0]).to(x.device)
+        x = F.relu(lastLinear(x))
+                
+        return x,None
+        
+        
+
 # class DenseAutoencoder(DenseFF):
 #     def __init__(self,input_size, min_size):
 #         hl=[]
@@ -61,7 +106,7 @@ class DenseFF(nn.Module):
 
     def forward(self, x):
         n=len(self.fc)
-        x = F.softmax(x,dim=-1) # don't relu on the last layer
+        # x = F.softmax(x,dim=-1) # don't relu on the last layer
         for i,fc in enumerate(self.fc,1):
             if self.nntype=='class':
                 if i<n:

@@ -263,11 +263,15 @@ class antab_trainer():
             # net= ann_models.DenseFF([args.dsize, args.dsize//2,args.dsize//4,args.dsize//4,args.dsize//2,args.dsize]) 
             # net= ann_models.DenseFF([args.dsize, args.dsize*2,args.dsize*4,args.dsize*4,args.dsize*2,args.dsize,1]) 
             # net= ann_models.DenseFF([args.dsize, args.dsize//2,args.dsize//4,args.dsize//8,args.dsize//4,args.dsize//2,args.dsize]) 
-            net= ann_models.DenseFF([args.dsize, args.dsize//8,args.dsize//16,args.dsize//8,args.dsize]).to(self.device) 
-            net= ann_models.DenseFF([args.dsize, args.dsize,args.dsize,args.dsize,args.dsize], nntype='autoenc').to(self.device) 
+            net= ann_models.DenseFF([args.dsize, args.dsize//8,args.dsize//16,args.dsize//8,args.dsize], nntype='autoenc').to(self.device) 
+            # net= ann_models.DenseFF([args.dsize, args.dsize,args.dsize,args.dsize,args.dsize], nntype='autoenc').to(self.device) 
             lossfn= nn.MSELoss().to(self.device)
         elif args.model=='dense':
             net= ann_models.DenseFF([args.dsize, args.dsize,args.dsize,args.dsize,args.dsize], nntype='dense').to(self.device) 
+            # lossfn= nn.MSELoss().to(self.device)
+            lossfn= nn.L1Loss().to(self.device)
+        elif args.model=='conv1d':
+            net= ann_models.Conv1([args.dsize, args.dsize//2,args.dsize//4]).to(self.device) 
             lossfn= nn.MSELoss().to(self.device)
 
 
