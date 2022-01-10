@@ -57,7 +57,7 @@ class DenseFF(nn.Module):
         for L in self.fc:
             # L.weight.data.uniform_(0.0, 1.0)
             L.bias.data.fill_(0.0)
-            nn.init.xavier_uniform(L.weight)
+            nn.init.xavier_uniform_(L.weight)
 
     def forward(self, x):
         n=len(self.fc)
