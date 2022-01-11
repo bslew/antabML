@@ -87,6 +87,10 @@ USAGE
                             required=False,
                             default='class',
                             choices=['class','autoenc','lstm','dense','conv1d'])
+        parser.add_argument('--denseConf',type=int,
+                            help='dense model linear hidden layers sizes configuration',
+                            default=[],
+                            nargs='*')
         parser.add_argument('--loss', type=str, 
                             help='loss function name [default: %(default)s]', 
                             required=False,

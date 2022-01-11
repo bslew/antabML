@@ -22,7 +22,7 @@ DEBUG = 0
 TESTRUN = 0
 PROFILE = 0
 
-def plot_inference(res):
+def plot_test(res):
     plt.plot(res['input'], 'ok', ls='-' ,label='input')
     plt.plot(res['target'], 'og', label='target')
     plt.plot(res['output'], 'sr', label='output')
@@ -51,9 +51,9 @@ def main(argv=None): # IGNORE:C0111
         
     tr = trainer.antab_trainer(args)
     tr.load_trained_model()
-    res=tr.inference()
+    res=tr.test()
     print(res)
-    plot_inference(res)
+    plot_test(res)
 
     return 0
 

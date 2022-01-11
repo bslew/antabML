@@ -36,7 +36,7 @@ def load_train_wisdom(path, **kwargs):
             
     returns
     -------
-        (x,y),status :bool
+        x,y,status :bool
     '''
     with open(path, 'rb') as f:
         data=pickle.load(f,encoding="latin1")
@@ -138,7 +138,8 @@ class antab_loader(Dataset):
                 self.files_list=ListSubdirectory(
                     root_dir=self.root).getRecursiveFileList(self.file_filter)
                 self.files_list=[os.path.join(self.root,x) for x in self.files_list]
-                
+            elif self.run_mode=='test':
+                pass
         print('self.run_mode ',self.run_mode)
         print('self.root ',self.root)
         
@@ -158,13 +159,26 @@ class antab_loader(Dataset):
 
         return file_path
 
-    def reshape_data(self,x):
+    def pad_data(self,x):
         '''
+        returns padded version of x 
         
         '''
-        ps=x % self.dsize
-        pad=ConstantPad1D((0,ps),self.pad_value)
-        
+        N=len(x) // self.dsize
+        ps=(N+1)*self.dsize - len(x) 
+        pad=ConstantPad1d((0,ps),self.pad_value)
+        # print(len(pad(x)),ps,len(x),self.dsize)
+        return pad(x).view(-1,self.dsize)
+
+    def load_as_batch(self,path):
+        x,y,status=load_train_wisdom(path=path)
+        n=len(x)
+        if status:
+            x=torch.from_numpy(x).float()
+            y=torch.from_numpy(y).float()
+        x=self.pad_data(x)
+        y=self.pad_data(y)
+        return x,y,n
         
     def __getitem__(self, index):
         '''

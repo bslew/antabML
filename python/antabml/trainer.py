@@ -257,6 +257,24 @@ class antab_trainer():
             o,_=self.net(x)
         return {'input':x.detach().numpy(),'target': y.detach().numpy(),'output':o.detach().numpy(), 'status':status }
        
+    def test(self):
+        '''
+        '''
+        args=self.args
+        L=loaders.antab_loader(dsize=self.trainConfig['dsize'],run_mode='test')
+        x,y,n=L.load_as_batch(args.test_file)
+        print(x,n)
+        # x,y,status=loaders.load_train_wisdom(args.test_file,len=self.trainConfig['dsize'])
+        # x=torch.from_numpy(x).float()
+        # y=torch.from_numpy(y).float()
+        o=None
+        # if status==True:
+        o,_=self.net(x)
+        
+        x=x.view(-1)[:n]
+        y=y.view(-1)[:n]
+        o=o.view(-1)[:n]
+        return {'input':x.detach().numpy(),'target': y.detach().numpy(),'output':o.detach().numpy(), 'size':n }
 
     def get_model(self,model_name,dsize):
         args=self.args
@@ -266,10 +284,13 @@ class antab_trainer():
         elif model_name=='lstm':
             net= nn.LSTM(dsize, dsize, batch_first=True).to(self.device)
         elif model_name=='autoenc':
-            net= ann_models.DenseFF([dsize, dsize//8,dsize//16,dsize//8,dsize], nntype='autoenc').to(self.device) 
+            if args.denseConf==[]:
+                net= ann_models.DenseFF([dsize, dsize//8,dsize//16,dsize//8,dsize], nntype='autoenc').to(self.device) 
+            else:
             # net= ann_models.DenseFF([args.dsize, args.dsize,args.dsize,args.dsize,args.dsize], nntype='autoenc').to(self.device) 
+                net= ann_models.DenseFF([dsize]+args.denseConf+[dsize], nntype='autoenc').to(self.device) 
         elif model_name=='dense':
-            net= ann_models.DenseFF([dsize, dsize,dsize,dsize,dsize], nntype='dense').to(self.device) 
+            net= ann_models.DenseFF([dsize]+args.denseConf+[dsize], nntype='dense').to(self.device) 
             # lossfn= nn.MSELoss().to(self.device)
         elif model_name=='conv1d':
             # net= ann_models.Conv1([args.dsize, args.dsize//2,args.dsize//4]).to(self.device) 
