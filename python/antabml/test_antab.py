@@ -25,7 +25,7 @@ PROFILE = 0
 def plot_test(res):
     plt.plot(res['input'], 'ok', ls='-' ,label='input')
     plt.plot(res['target'], 'og', label='target')
-    plt.plot(res['output'], 'sr', label='output')
+    plt.plot(res['output'], 'sr', ms=4,label='output')
     plt.legend()
     plt.show()
     

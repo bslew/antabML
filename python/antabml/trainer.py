@@ -333,7 +333,9 @@ class antab_trainer():
                                 dsize=args.dsize,
                                 transform=None, 
                                 target_transform=None,
-                                verbose=args.verbose)
+                                verbose=args.verbose,
+                                preload=True,
+                                )
 
         Ntrain,Nvalid,Ntest=[int(frac*len(DS)) for frac in args.split]
         if (Ntrain+Nvalid+Ntest!=len(DS)):

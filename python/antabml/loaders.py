@@ -11,7 +11,7 @@ import utils
 import random
 import torch
 from torch.utils.data import DataLoader, Dataset
-from torch.nn import ConstantPad1d
+from torch.nn import ConstantPad1d, ReflectionPad1d
 
 def load_wisdom(path):
     '''
@@ -99,6 +99,7 @@ class antab_loader(Dataset):
         
             run_mode - ('train', 'inference'), default: 'train'
             
+            preload - True/False - preload all data before training
         
         Example
         -------
@@ -136,7 +137,9 @@ class antab_loader(Dataset):
             if self.run_mode=='train':
                 self.files_list=ListSubdirectory(
                     root_dir=self.root).getRecursiveFileList(self.file_filter)
-                self.preload_all_data()
+                if 'preload' in kwargs.keys():
+                    if kwargs['preload']:
+                        self.preload_all_data()
                 
             elif self.run_mode=='inference':
                 self.files_list=ListSubdirectory(
@@ -159,14 +162,35 @@ class antab_loader(Dataset):
         print('preloading all data')
         self.X=None
         self.Y=None
+        Xl=[]
+        Yl=[]
+        N=0
         for i,f in enumerate(self.files_list):
             f=self.get_path(i)
             X,Y,n=self.load_as_batch(f)
             # self.data=torch.stack(self.data)
+            
             for x,y in zip(X,Y):
-                self.X=X if self.X==None else torch.vstack((self.X,x))
-                self.Y=Y if self.Y==None else torch.vstack((self.Y,y))
-            print('loaded {} vectors'.format(len(self.X)))
+                N=N+len(X)
+                Xl.append(x)
+                Yl.append(y)
+                # self.X=X if self.X==None else torch.vstack((self.X,x))
+                # self.Y=Y if self.Y==None else torch.vstack((self.Y,y))
+                
+            # if len(self.X) % 100==0:
+            #     print('loaded {} vectors'.format(len(self.X)))
+            if len(Xl) % 100==0:
+                print('loaded {} vectors'.format(len(Xl)))
+
+        self.X=torch.Tensor(len(Xl),self.dsize)
+        self.Y=torch.Tensor(len(Yl),self.dsize)
+        
+        for i,(x,y) in enumerate(zip(Xl,Yl)):
+            self.X[i]=x
+            self.Y[i]=y
+                
+        
+        
         print(self.X.shape)
 
         # self.data=torch.stack(self.data,dim=0)
@@ -185,17 +209,64 @@ class antab_loader(Dataset):
     def pad_data(self,x,**kwargs):
         '''
         returns padded version of x 
+
+        parameters
+        ----------
+            x - 1d tensor
+
+
+        returns
+        -------
+            2-d tensor with padded values of size N x self.dsize
+
+        keywords
+        --------
+            mode 
+                - replicate - replicates the last value in the inputs and targets to fill the required
+                fixed data vector length that matches the size of first/last ANN linear layer
+
+                - reflection
+                
+                
         
         '''
+        padx=x
         if 'mode' in kwargs.keys():
             if kwargs['mode']=='replicate':
                 self.pad_value=x[-1]
-            
-        N=len(x) // self.dsize
-        ps=(N+1)*self.dsize - len(x) 
-        pad=ConstantPad1d((0,ps),self.pad_value)
+                
+        if 'mode' in kwargs.keys():
+            if kwargs['mode']=='reflection':
+                N=len(x) // self.dsize
+                Npad=(N+1)*self.dsize - len(x) 
+                padx=x.reshape((1,-1))
+                # print(padx.shape[1])
+                # print(Npad)
+                while padx.shape[1]<Npad:
+                    # print('need to pad couple  times')
+                    thispad=padx.shape[1]-1
+                    # print(thispad)
+                    pad = ReflectionPad1d((0, thispad))
+                    padx=pad(padx)
+                    Npad=(padx.shape[1] // self.dsize +1)*self.dsize - padx.shape[1] 
+                #     print(Npad)
+                #     print(padx.shape)
+                # print('finally')
+                # print(padx.shape[1])
+                Npad=(padx.shape[1] // self.dsize +1)*self.dsize - padx.shape[1] 
+                pad = ReflectionPad1d((0, Npad))
+                padx=pad(padx)
+                # print(Npad)
+                # print(padx.shape)
+
+        else:
+            N=len(x) // self.dsize
+            ps=(N+1)*self.dsize - len(x) 
+            pad=ConstantPad1d((0,ps),self.pad_value)
+            padx=pad(x)
         # print(len(pad(x)),ps,len(x),self.dsize)
-        return pad(x).view(-1,self.dsize)
+
+        return padx.view(-1,self.dsize)
 
     def load_as_batch(self,path):
         '''
@@ -220,8 +291,13 @@ class antab_loader(Dataset):
         n=len(x)
         x=torch.from_numpy(x).float()
         y=torch.from_numpy(y).float()
-        x=self.pad_data(x,mode='replicate')
-        y=self.pad_data(y,mode='replicate')
+
+        # x=self.pad_data(x,mode='replicate')
+        # y=self.pad_data(y,mode='replicate')
+        x=self.pad_data(x,mode='reflection')
+        y=self.pad_data(y,mode='reflection')
+        if self.verbose>3:
+            print('padded X',x.shape)
         return x,y,n
         
     def __getitem__(self, index):

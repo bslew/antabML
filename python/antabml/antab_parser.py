@@ -80,7 +80,7 @@ USAGE
         parser.add_argument('--chkpt_save', type=int, 
                             help='save ckp file every this epoch [default: %(default)s]', 
                             required=False,
-                            default=100)
+                            default=50)
 
         parser.add_argument('--model', type=str, 
                             help='model name [default: %(default)s]', 
