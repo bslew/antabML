@@ -4,6 +4,7 @@ Created on Dec 10, 2021
 @author: blew
 '''
 import torch
+import torch.nn as nn
 import numpy as np
 
 def select_top_N(outputs, N):
@@ -26,7 +27,7 @@ def select_top_N(outputs, N):
     return outputs.detach().cpu().numpy().argsort()[-N:][::-1]
 
 
-def get_accuracy(outputs,labels):
+def get_accuracy(outputs,labels,device):
     '''
     calculate accuracy
     
@@ -45,7 +46,10 @@ def get_accuracy(outputs,labels):
     
     '''
 
-    acc2=(outputs==labels).cpu().float().squeeze().detach().numpy()
+    # acc2=(outputs==labels).cpu().float().squeeze().detach().numpy()
+    acc2=nn.MSELoss().to(device)
+    return acc2(outputs,labels).cpu().float().detach().numpy()
+
     # print(acc2)
 #
 

@@ -107,18 +107,28 @@ class antab_trainer():
         
         # m=nn.ConstantPad1d((0,))
         nbatch=len(data_loader)
+        bstats=None
         for i, (inputs, targets) in enumerate(data_loader, 1):
             if args.verbose>2:
-                print('inputs.shpe: ',inputs.shape)
-                print('targets.shpe: ',targets.shape)
+                print('inputs.shape: ',inputs.shape)
+                print('targets.shape: ',targets.shape)
             # x=inputs.view(len(inputs),1,-1)
             # y=inputs.view(len(targets),1,-1)
-            x=inputs.view(len(inputs),-1)
-            y=targets.view(len(targets),-1)
+
+            if len(inputs.shape)==3:
+                x=inputs.view(-1,inputs.shape[-1])
+                y=targets.view(-1,targets.shape[-1])
+            elif len(inputs.shape)==2:
+                x=inputs.view(len(inputs),-1)
+                y=targets.view(len(targets),-1)
+                
             bstats=self.process_batch(i, nbatch,x, y, 
                                      ann, optimizer, criterion, train, args,**kwargs)
         
-        
+
+        if bstats==None:
+            return {'loss': -1, 'acc': -1}
+            
         estats['loss'].append(bstats['loss'])
         estats['acc'].append(bstats['acc'])
             
@@ -152,7 +162,6 @@ class antab_trainer():
         parameters
         ==========
             i - batch number (log only)
-            i2 - minibatch number (for log only)
             nbatch - total number of batches
             
         '''
@@ -167,22 +176,24 @@ class antab_trainer():
         if train:
             optimizer.zero_grad()
 
-        # forward + backward + optimize
-        outputs,_ = ann(inputs.to(self.device))
-
         if self.args.verbose>2:
             print('inputs',inputs.shape)
-            print('outputs',outputs.shape)
             print('targets',targets.shape)
-        
-        loss = criterion(outputs, targets.to(self.device))
         if self.args.verbose>4:
             print('inputs')
             print(inputs)
             print('targets')
             print(targets)
+
+        outputs,_ = ann(inputs.to(self.device))
+
+        if self.args.verbose>2:
+            print('outputs',outputs.shape)
+        if self.args.verbose>4:
             print('outputs')
             print(outputs)
+        
+        loss = criterion(outputs, targets.to(self.device))
 
 #             print(loss)
         if train:
@@ -191,7 +202,7 @@ class antab_trainer():
             
         bloss=loss.item()
         # bacc=np.mean(stats.vec_dist_norm2().calc(outputs,targets))
-        bacc=np.mean(stats.get_accuracy(outputs,targets.to(self.device)))
+        bacc=np.mean(stats.get_accuracy(outputs,targets.to(self.device),self.device))
 
 
         if self.args.verbose>1:
@@ -229,7 +240,7 @@ class antab_trainer():
         # args['model']=trainConfig['model']
         # args['dsize']=trainConfig['dsize']
 
-        self.net=self.get_model(trainConfig['model'],trainConfig['dsize'])
+        self.net=self.get_model(trainConfig['model'],trainConfig['dsize'],trainConfig['denseConf'])
         self.net.to(device=self.device)
             
         self.logger.info("Loading model from: {}".format(trained_model_file_name))
@@ -274,9 +285,20 @@ class antab_trainer():
         x=x.view(-1)[:n]
         y=y.view(-1)[:n]
         o=o.view(-1)[:n]
+        
+        '''
+        
+        perform postprocessing cleaning
+        
+        '''
+        
+        # remove zeros
+        
+        
+        
         return {'input':x.detach().numpy(),'target': y.detach().numpy(),'output':o.detach().numpy(), 'size':n }
 
-    def get_model(self,model_name,dsize):
+    def get_model(self,model_name,dsize,hiddenConf):
         args=self.args
         net=None
         if model_name=='class':
@@ -288,9 +310,9 @@ class antab_trainer():
                 net= ann_models.DenseFF([dsize, dsize//8,dsize//16,dsize//8,dsize], nntype='autoenc').to(self.device) 
             else:
             # net= ann_models.DenseFF([args.dsize, args.dsize,args.dsize,args.dsize,args.dsize], nntype='autoenc').to(self.device) 
-                net= ann_models.DenseFF([dsize]+args.denseConf+[dsize], nntype='autoenc').to(self.device) 
+                net= ann_models.DenseFF([dsize]+hiddenConf+[dsize], nntype='autoenc').to(self.device) 
         elif model_name=='dense':
-            net= ann_models.DenseFF([dsize]+args.denseConf+[dsize], nntype='dense').to(self.device) 
+            net= ann_models.DenseFF([dsize]+hiddenConf+[dsize], nntype='dense').to(self.device) 
             # lossfn= nn.MSELoss().to(self.device)
         elif model_name=='conv1d':
             # net= ann_models.Conv1([args.dsize, args.dsize//2,args.dsize//4]).to(self.device) 
@@ -340,6 +362,7 @@ class antab_trainer():
 
         trainConfig['DSsize']=len(DS)
         trainConfig['dsize']=args.dsize
+        trainConfig['denseConf']=args.denseConf
         trainConfig['DSsplit']=args.split
         trainConfig['split_seed']=args.split_seed
         trainConfig['Ntrain']=Ntrain
@@ -366,7 +389,7 @@ class antab_trainer():
 
         trainConfig['model']=args.model
         
-        net=self.get_model(args.model,args.dsize)
+        net=self.get_model(args.model,args.dsize,trainConfig['denseConf'])
         Nparam,Names=utils.ANN_parameter_count(net, trainable_only=True)
         for name, param in zip(Names,Nparam):
             logger.info("layer name: {}, params count: {}".format(name,param))
@@ -451,7 +474,6 @@ class antab_trainer():
                                                   epoch=epoch,
                                                   )
 #             print(valid_loss,valid_stats)
-            
             valid_hist.append(epoch,
                               valid_stats['loss'],
                               valid_stats['acc'],
@@ -489,7 +511,8 @@ class antab_trainer():
         valid_hist.save(hist_file_name)
 
 
-
+        hist_plot_file_name=os.path.join(args.model_dir,"train_hist.jpg")
+        utils.plot_train_history([train_hist,valid_hist],hist_plot_file_name)
 
 
 

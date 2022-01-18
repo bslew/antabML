@@ -25,9 +25,8 @@ def load_wisdom(path):
 
 def load_train_wisdom(path, **kwargs):
     '''
-    loads wisdom saved by BL modified antab program
+    loads wisdom saved by BL modified antabfs program
     
-    returns x and y as np arrays
     
     keywords
     --------
@@ -36,16 +35,16 @@ def load_train_wisdom(path, **kwargs):
             
     returns
     -------
-        x,y,status :bool
+        1d array-like x,1d array-like y,status :bool
     '''
     with open(path, 'rb') as f:
         data=pickle.load(f,encoding="latin1")
     
-    if 'y0' not in data.keys():
+    if 'X' not in data.keys():
         return [],[],False
-    if 'y' not in data.keys():
+    if 'Y' not in data.keys():
         return [],[],False
-    x,y=np.array(data['y0']),np.array(data['y'])
+    x,y=np.array(data['X']),np.array(data['Y'])
     # print("Loading {}/{} data points from {}".format(len(x),len(y),path))
     if len(x)!=len(y):
         return x,y,False
@@ -108,6 +107,9 @@ class antab_loader(Dataset):
         
         '''
         super().__init__()
+
+        self.X=None
+        self.Y=None
         
         self.run_mode='train'
         if 'run_mode' in kwargs.keys():
@@ -134,6 +136,8 @@ class antab_loader(Dataset):
             if self.run_mode=='train':
                 self.files_list=ListSubdirectory(
                     root_dir=self.root).getRecursiveFileList(self.file_filter)
+                self.preload_all_data()
+                
             elif self.run_mode=='inference':
                 self.files_list=ListSubdirectory(
                     root_dir=self.root).getRecursiveFileList(self.file_filter)
@@ -149,6 +153,25 @@ class antab_loader(Dataset):
             self.logger.info('loader mode: {}'.format(self.model))
 #         print('mapping: ',self.mapping)
             
+    def preload_all_data(self):
+        '''
+        '''
+        print('preloading all data')
+        self.X=None
+        self.Y=None
+        for i,f in enumerate(self.files_list):
+            f=self.get_path(i)
+            X,Y,n=self.load_as_batch(f)
+            # self.data=torch.stack(self.data)
+            for x,y in zip(X,Y):
+                self.X=X if self.X==None else torch.vstack((self.X,x))
+                self.Y=Y if self.Y==None else torch.vstack((self.Y,y))
+            print('loaded {} vectors'.format(len(self.X)))
+        print(self.X.shape)
+
+        # self.data=torch.stack(self.data,dim=0)
+        print('preloading done')
+        
     def get_path(self,index):
         if self.run_mode=='train':
             file_path=os.path.join(self.root,self.files_list[index])
@@ -159,11 +182,15 @@ class antab_loader(Dataset):
 
         return file_path
 
-    def pad_data(self,x):
+    def pad_data(self,x,**kwargs):
         '''
         returns padded version of x 
         
         '''
+        if 'mode' in kwargs.keys():
+            if kwargs['mode']=='replicate':
+                self.pad_value=x[-1]
+            
         N=len(x) // self.dsize
         ps=(N+1)*self.dsize - len(x) 
         pad=ConstantPad1d((0,ps),self.pad_value)
@@ -171,13 +198,30 @@ class antab_loader(Dataset):
         return pad(x).view(-1,self.dsize)
 
     def load_as_batch(self,path):
+        '''
+        load wisdom train data from pickle file and form a batch
+        of vectors of length self.dsize
+        
+        parameters
+        ----------
+        path - path to picke file
+        
+        returns
+        -------
+        tuple x,y,n where x,y are 2-d tensors of size Nxdsize with self.pad_value
+        right-padding (if required) and n is the length of the original data
+        
+        n=-1 if load error occured (e.g. corrupted/incomplete input file)
+        
+        '''
         x,y,status=load_train_wisdom(path=path)
+        if not status:
+            return torch.Tensor(),torch.Tensor(),-1
         n=len(x)
-        if status:
-            x=torch.from_numpy(x).float()
-            y=torch.from_numpy(y).float()
-        x=self.pad_data(x)
-        y=self.pad_data(y)
+        x=torch.from_numpy(x).float()
+        y=torch.from_numpy(y).float()
+        x=self.pad_data(x,mode='replicate')
+        y=self.pad_data(y,mode='replicate')
         return x,y,n
         
     def __getitem__(self, index):
@@ -191,6 +235,10 @@ class antab_loader(Dataset):
             in inference mode: tuple of img,root
         
         '''
+
+        if self.X!=None:
+            return self.X[index].float(),self.Y[index].float()
+        
         file_path=self.get_path(index)
 
         status=False
@@ -198,33 +246,50 @@ class antab_loader(Dataset):
         #     x,y,status=load_train_wisdom(file_path)
         #     file_path=self.get_path(random.randint(0,len(self.files_list)-1))
         #     return torch.from_numpy(x).float(), torch.from_numpy(y).float()
-        
+
         while not status:
-            # print('Trying to load data from file: {}'.format(file_path))
-            x,y,status=load_train_wisdom(file_path, len=self.dsize)
+            x,y,n=self.load_as_batch(path=file_path)
+            status=n>0
             file_path=self.get_path(random.randint(0,len(self.files_list)-1))
-                
-        # print(x)
-        # print(torch.from_numpy(y==x).float())
-        
-        # return torch.from_numpy(x).float(), torch.from_numpy(y==x).float()
-        # print(torch.from_numpy(x).float(), torch.from_numpy(y==x).int())
-        # return torch.from_numpy(x).float(), torch.from_numpy(
-        #     np.array([int(y[0]==x[0]),int(y[0]!=x[0])],dtype=float)).float()
+
         if self.model=='class':
-            return torch.from_numpy(x).float(), torch.tensor(y[0]==x[0]).float()
+            return x.float(), torch.tensor(y[0]==x[0]).float()
         elif self.model=='autoenc':
-            return torch.from_numpy(x).float(), torch.from_numpy(x).float()
+            return x.float(), x.float()
         elif self.model=='dense':
-            return torch.from_numpy(x).float(), torch.from_numpy(y).float()
+            return x.float(), y.float()
         elif self.model=='conv1d':
-            return torch.from_numpy(x).float(), torch.from_numpy(y).float()
+            return x.float(), y.float()
+        
+        # while not status:
+        #     # print('Trying to load data from file: {}'.format(file_path))
+        #     x,y,status=load_train_wisdom(file_path, len=self.dsize)
+        #     file_path=self.get_path(random.randint(0,len(self.files_list)-1))
+        #
+        # # print(x)
+        # # print(torch.from_numpy(y==x).float())
+        #
+        # # return torch.from_numpy(x).float(), torch.from_numpy(y==x).float()
+        # # print(torch.from_numpy(x).float(), torch.from_numpy(y==x).int())
+        # # return torch.from_numpy(x).float(), torch.from_numpy(
+        # #     np.array([int(y[0]==x[0]),int(y[0]!=x[0])],dtype=float)).float()
+        # if self.model=='class':
+        #     return torch.from_numpy(x).float(), torch.tensor(y[0]==x[0]).float()
+        # elif self.model=='autoenc':
+        #     return torch.from_numpy(x).float(), torch.from_numpy(x).float()
+        # elif self.model=='dense':
+        #     return torch.from_numpy(x).float(), torch.from_numpy(y).float()
+        # elif self.model=='conv1d':
+        #     return torch.from_numpy(x).float(), torch.from_numpy(y).float()
             
         return None
         
             
     
     def __len__(self):
+        if self.X!=None:
+            return len(self.X)
+        
         return len(self.files_list)        
 
 
