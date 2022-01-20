@@ -432,7 +432,6 @@ class antab_trainer():
             '''
             train on train dataset
             '''
-            logger.info('training')
             train_stats=self.process_model_epoch(data_loader=trainloader, 
                                                   ann=net, 
                                                   optimizer=optimizer, 
@@ -466,7 +465,6 @@ class antab_trainer():
             '''
             test on validation dataset
             '''
-            logger.info('validating')
             valid_stats=self.process_model_epoch(data_loader=validloader, 
                                                   ann=net, 
                                                   optimizer=optimizer, 
