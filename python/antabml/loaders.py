@@ -50,6 +50,8 @@ def load_train_wisdom(path, **kwargs):
         return x,y,False
         # raise Exception("BadData")
                    
+    if len(x)<=1:
+        return x,y,False
     
     if 'len' in kwargs.keys() and int(kwargs['len'])>0:
         dlen=int(kwargs['len'])
@@ -179,7 +181,7 @@ class antab_loader(Dataset):
                 
             # if len(self.X) % 100==0:
             #     print('loaded {} vectors'.format(len(self.X)))
-            if len(Xl) % 100==0:
+            if len(Xl) % 100==0 or self.verbose>2:
                 print('loaded {} vectors'.format(len(Xl)))
 
         self.X=torch.Tensor(len(Xl),self.dsize)
@@ -240,10 +242,13 @@ class antab_loader(Dataset):
                 N=len(x) // self.dsize
                 Npad=(N+1)*self.dsize - len(x) 
                 padx=x.reshape((1,-1))
+                # print('len(x):',len(x))
                 # print(padx.shape[1])
                 # print(Npad)
+                padTimes=0
                 while padx.shape[1]<Npad:
-                    # print('need to pad couple  times')
+                    padTimes+=1
+                    # print('need to pad couple  times ({})'.format(padTimes))
                     thispad=padx.shape[1]-1
                     # print(thispad)
                     pad = ReflectionPad1d((0, thispad))
@@ -285,6 +290,8 @@ class antab_loader(Dataset):
         n=-1 if load error occured (e.g. corrupted/incomplete input file)
         
         '''
+        if self.verbose>2:
+            print('loading wisdom from {}'.format(path))
         x,y,status=load_train_wisdom(path=path)
         if not status:
             return torch.Tensor(),torch.Tensor(),-1

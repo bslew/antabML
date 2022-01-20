@@ -23,6 +23,7 @@ class Conv1(nn.Module):
         for i,s in enumerate(conf):
             if i>0:
                 self.fc.append(nn.Linear(conf[i-1], s))
+                self.fc.append(nn.Dropout(p=0.1))
 
         C=64
         k=64
@@ -32,13 +33,17 @@ class Conv1(nn.Module):
     def init_network(self):
         for L in self.fc:
             # L.weight.data.uniform_(0.0, 1.0)
-            L.bias.data.fill_(0.0)
-            nn.init.xavier_uniform_(L.weight)
+            if isinstance(L,nn.Linear):
+                L.bias.data.fill_(0.0)
+                nn.init.xavier_uniform_(L.weight)
     
         
         
     def forward(self,x):
         n=len(self.fc)
+        x = x.view(x.size(0),1, -1)
+        x=F.relu(self.conv1(x))
+        x = x.view(x.size(0), -1)
         for i,fc in enumerate(self.fc,1):
             if self.nntype=='conv1d':
                 if i<n:
@@ -87,6 +92,7 @@ class DenseFF(nn.Module):
         for i,s in enumerate(size):
             if i>0:
                 self.fc.append(nn.Linear(size[i-1], s))
+                self.fc.append(nn.Dropout(p=0.1))
 
         self.init_network()
 
@@ -102,8 +108,9 @@ class DenseFF(nn.Module):
     def init_network(self):
         for L in self.fc:
             # L.weight.data.uniform_(0.0, 1.0)
-            L.bias.data.fill_(0.0)
-            nn.init.xavier_uniform_(L.weight)
+            if isinstance(L,nn.Linear):
+                L.bias.data.fill_(0.0)
+                nn.init.xavier_uniform_(L.weight)
 
     def forward(self, x):
         n=len(self.fc)
