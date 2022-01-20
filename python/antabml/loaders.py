@@ -246,7 +246,7 @@ class antab_loader(Dataset):
                 # print(padx.shape[1])
                 # print(Npad)
                 padTimes=0
-                while padx.shape[1]<Npad:
+                while padx.shape[1]<=Npad:
                     padTimes+=1
                     # print('need to pad couple  times ({})'.format(padTimes))
                     thispad=padx.shape[1]-1
