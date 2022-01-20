@@ -158,6 +158,7 @@ def plot_train_history(train_hist, output_file=None, show=False):
 #     print(matplotlib.rcParams['axes.prop_cycle'].color)
 #      = cycler(color='bgrcmyk')
     
+    fig=plt.figure(figsize=(12,8))
     plt.subplot(211)
     for i,th in enumerate(train_hist):
         lab=None
