@@ -390,6 +390,7 @@ class antab_trainer():
         trainConfig['loss']=args.loss
 
         trainConfig['model']=args.model
+        trainConfig['dropout']=args.dropout
         
         net=self.get_model(args.model,args.dsize,trainConfig['denseConf'])
         Nparam,Names=utils.ANN_parameter_count(net, trainable_only=True)
