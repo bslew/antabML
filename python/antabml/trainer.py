@@ -312,7 +312,7 @@ class antab_trainer():
             # net= ann_models.DenseFF([args.dsize, args.dsize,args.dsize,args.dsize,args.dsize], nntype='autoenc').to(self.device) 
                 net= ann_models.DenseFF([dsize]+hiddenConf+[dsize], nntype='autoenc').to(self.device) 
         elif model_name=='dense':
-            net= ann_models.DenseFF([dsize]+hiddenConf+[dsize], nntype='dense').to(self.device) 
+            net= ann_models.DenseFF([dsize]+hiddenConf+[dsize], nntype='dense', dropout=args.dropout).to(self.device) 
             # lossfn= nn.MSELoss().to(self.device)
         elif model_name=='conv1d':
             # net= ann_models.Conv1([args.dsize, args.dsize//2,args.dsize//4]).to(self.device) 

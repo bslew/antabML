@@ -62,6 +62,9 @@ USAGE
         parser.add_argument('--momentum', type=float, 
                             help='optimizer momentum [default: %(default)s]', 
                             default=0.9)
+        parser.add_argument('--dropout', type=float, 
+                            help='dropout rate after linear layer [default: %(default)s]', 
+                            default=0.1)
         parser.add_argument('--device', type=str, 
                             help='select device to use [default: %(default)s]', 
                             choices=['auto','cpu','cuda:0'], 

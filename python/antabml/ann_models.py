@@ -80,19 +80,23 @@ class DenseFF(nn.Module):
     '''
 
 
-    def __init__(self, size=[120,240,64,3], nntype='class'):
+    def __init__(self, size=[120,240,64,3], nntype='class', **kwargs):
         '''
         Constructor
         '''
         super().__init__()
         self.nntype=nntype
+        self.dropout_rate=0.1
+        if 'dropout' in kwargs.keys():
+            self.dropout_rate=kwargs['dropout']
 
         self.fc=nn.ModuleList()
  
         for i,s in enumerate(size):
             if i>0:
                 self.fc.append(nn.Linear(size[i-1], s))
-                self.fc.append(nn.Dropout(p=0.1))
+                if self.dropout_rate>0:
+                    self.fc.append(nn.Dropout(p=self.dropout_rate))
 
         self.init_network()
 
