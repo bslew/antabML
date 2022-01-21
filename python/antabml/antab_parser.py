@@ -4,6 +4,7 @@ Created on Dec 9, 2021
 @author: blew
 '''
 import os,sys
+import random,binascii
 
 __version__ = 0.1
 __date__ = '2021-06-22'
@@ -28,6 +29,8 @@ python ./train_antab.py --bs 1024 --model autoenc --model_dir ../../models/autoe
  
 python ./train_antab.py --bs 1024 --epoch 10000 --model dense --model_dir ../../models/denseFF/ --train_dir ../../data/train/ --load_worker 5
 
+run logged with MLflow
+python ./train_antab.py --bs 1000 --epoch 500 --model dense --dsize 2000 --denseConf 1000 500 500 1000 --dropout 0.1 --loss smoothL1 --lr 0.01  --train_dir ~/programy2/antab-vlbeer-data/wisdom-tr/ --split 0.5 0.5 0 --model_dir ~/programy2/antabML/models/auto --load_worker 4 --MLflow_tracking_uri "http://192.168.1.63:5000" --MLflow_run_name "dense 2000 1 DS=tr"
 '''
     program_license = '''%s
 
@@ -76,9 +79,13 @@ USAGE
                             nargs='*',
                             )
         parser.add_argument('--model_dir', type=str, 
-                            help='directory containing trained model and all partial files [default: %(default)s]', 
+                            help=''''directory containing trained model and all 
+                            partial files. The default indicates the root dir
+                            for all models, and magic key 'auto' indicates that 
+                            the model directory will be automatically generated
+                            with which the root dir will be suffixed. [default: %(default)s]''', 
                             required=False,
-                            default='../../models/lstm')
+                            default='../../models/auto')
 
         parser.add_argument('--chkpt_save', type=int, 
                             help='save ckp file every this epoch [default: %(default)s]', 
@@ -138,6 +145,13 @@ USAGE
 
         # Process arguments
         args = parser.parse_args()
+        
+        if args.model_dir.endswith('auto'):
+            # suffix=''.join([str(random.randint(0, i)) for i in range(20)])
+            suffix=binascii.hexlify(os.urandom(8)).decode()
+            args.model_dir=os.path.join(args.model_dir[:-4],suffix)
+            
+        # print(args.model_dir)
 
     except KeyboardInterrupt:
         ## handle keyboard interrupt ###

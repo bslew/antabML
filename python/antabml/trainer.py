@@ -144,14 +144,15 @@ class antab_trainer():
         else:
             MLFmetric_type_pref='test'
 
-            
+        mloss=np.mean(estats['loss'])
+        macc=np.mean(estats['acc'])
         if args.MLflow_tracking_uri!='':
-            mlflow.log_metric('{} mean accuracy'.format(MLFmetric_type_pref),estats['acc'],epoch)
-            mlflow.log_metric('{} mean loss'.format(MLFmetric_type_pref),estats['loss'],epoch)
+            mlflow.log_metric('{} mean acc'.format(MLFmetric_type_pref),macc,epoch)
+            mlflow.log_metric('{} mean loss'.format(MLFmetric_type_pref),mloss,epoch)
             mlflow.log_metric('epoch',float(epoch))
 
         
-        return {'loss': np.mean(estats['loss']), 'acc': np.mean(estats['acc'])}
+        return {'loss': mloss, 'acc': macc}
 
     
     ##############################################################
@@ -372,6 +373,7 @@ class antab_trainer():
         trainConfig['Ntest']=Ntest
         trainConfig['bs']=args.bs
         trainConfig['epochs']=args.epochs
+        trainConfig['model_dir']=args.model_dir
 
         lossfn=None
         if args.loss=='MSE':
