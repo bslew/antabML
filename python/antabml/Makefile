@@ -28,7 +28,7 @@ train:
 	--split ${split} \
 	--split_seed ${seed} \
 	--train_dir ${train_dir} \
-	--model_dir ${model_dir} \ 
+	--model_dir ${model_dir} \
 	--load_workers ${load_workers} \
 	--chkpt_save ${chkpt_save} \
 	--MLflow_tracking_uri ${MLflow_tracking_uri} \
