@@ -24,6 +24,8 @@ def get_parser():
     
 Examples:
 
+TRAIN:
+
 python ./train_antab.py --bs 1024 --model autoenc --model_dir ../../models/autoenc  --train_dir ../../data/train/
  
  
@@ -31,6 +33,12 @@ python ./train_antab.py --bs 1024 --epoch 10000 --model dense --model_dir ../../
 
 run logged with MLflow
 python ./train_antab.py --bs 1000 --epoch 500 --model dense --dsize 2000 --denseConf 1000 500 500 1000 --dropout 0.1 --loss smoothL1 --lr 0.01  --train_dir ~/programy2/antab-vlbeer-data/wisdom-tr/ --split 0.5 0.5 0 --model_dir ~/programy2/antabML/models/auto --load_worker 4 --MLflow_tracking_uri "http://192.168.1.63:5000" --MLflow_run_name "dense 2000 1 DS=tr"
+
+TEST:
+
+python ./test_antab.py --model_file path/to/model/model.ckp_500 
+    --test_file ~/path/to/test_file.awpkl
+
 '''
     program_license = '''%s
 

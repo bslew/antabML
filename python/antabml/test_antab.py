@@ -46,8 +46,8 @@ def main(argv=None): # IGNORE:C0111
     if verbose > 0:
         print("Verbose mode on")
     
-    if not os.path.isfile(args.model_dir):
-        utils.mkdir_p(args.model_dir)
+    # if not os.path.isfile(args.model_dir):
+    #     utils.mkdir_p(args.model_dir)
         
     tr = trainer.antab_trainer(args)
     tr.load_trained_model()

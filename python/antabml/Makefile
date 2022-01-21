@@ -14,6 +14,8 @@ model_dir=../../models/auto
 load_workers=4
 chkpt_save=500
 MLflow_tracking_uri=http://192.168.1.63:5000
+MLflow_exp_name=antabML
+MLflow_exp_name=antabML class
 MLflow_run_name=dense 2500 2 DS=all
 
 train:
@@ -32,6 +34,7 @@ train:
 	--load_workers ${load_workers} \
 	--chkpt_save ${chkpt_save} \
 	--MLflow_tracking_uri "${MLflow_tracking_uri}" \
+	--MLflow_exp_name "${MLflow_exp_name}" \
 	--MLflow_run_name "${MLflow_run_name}"
 
 test:
