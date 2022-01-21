@@ -152,7 +152,7 @@ USAGE
             args.model_dir=os.path.join(args.model_dir[:-4],suffix)
             
         # print(args.model_dir)
-        if args.splot_seed==0:
+        if args.split_seed==0:
             args.split_seed=int(binascii.hexlify(os.urandom(4)).decode(),16)
             print('setting split_seed to: {}'.format(args.split_seed))
 
