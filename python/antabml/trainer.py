@@ -146,8 +146,8 @@ class antab_trainer():
 
             
         if args.MLflow_tracking_uri!='':
-            mlflow.log_metric('{} mean accuracy'.format(MLFmetric_type_pref),avg_stats['acc'],epoch)
-            mlflow.log_metric('{} mean loss'.format(MLFmetric_type_pref),np.mean(bstats['loss']),epoch)
+            mlflow.log_metric('{} mean accuracy'.format(MLFmetric_type_pref),estats['acc'],epoch)
+            mlflow.log_metric('{} mean loss'.format(MLFmetric_type_pref),estats['loss'],epoch)
             mlflow.log_metric('epoch',float(epoch))
 
         
@@ -412,12 +412,15 @@ class antab_trainer():
         train_hist=stats.Train_History_EpochLossAcc('Train DS')
         valid_hist=stats.Train_History_EpochLossAcc('Valid DS')
 
-        # '''
-        # save MLflow stuff
-        # '''
-        # if args.MLflow_tracking_uri!='':
-        #     [ mlflow.log_param(k,v) for k,v in trainConfig.items() ]
-        #     [ mlflow.log_param(k,v) for k,v in netConfig.items() ]
+        '''
+        save MLflow stuff
+        '''
+        if args.MLflow_tracking_uri!='':
+            [ mlflow.log_param(k,v) for k,v in trainConfig.items() ]
+            # [ mlflow.log_param(k,v) for k,v in netConfig.items() ]
+
+
+
 
         start_epoch=0
         # if args.load_ckpt!="":

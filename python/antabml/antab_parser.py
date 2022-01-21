@@ -112,9 +112,9 @@ USAGE
         #                     default=False)
 
         parser.add_argument('--MLflow_tracking_uri',type=str,default='',
-                            help='''MLflow tracking server e.g. "http://host.name:4040.
+                            help='''MLflow tracking server e.g. "http://192.168.1.63:5000.
                             Use empty string to skip MLflow logging''')
-        parser.add_argument('--MLflow_exp_name',type=str,default='',help='MLflow experiment name. If empty will generate name using datetime')
+        parser.add_argument('--MLflow_exp_name',type=str,default='antabML',help='MLflow experiment name. If empty will generate name using datetime')
         parser.add_argument('--MLflow_run_name',type=str,default='',help='MLflow run name.')
 
         '''
