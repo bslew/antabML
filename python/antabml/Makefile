@@ -11,7 +11,7 @@ split=0.5 0.5 0
 seed=0
 train_dir=~/projects/antab-vlbeer-data/wisdom
 model_dir=../../models/auto
-load_worker=4
+load_workers=4
 chkpt_save=500
 MLflow_tracking_uri="http://192.168.1.63:5000"
 MLflow_run_name="dense 2500 2 DS=all"
@@ -29,7 +29,7 @@ train:
 	--split_seed ${seed} \
 	--train_dir ${train_dir} \
 	--model_dir ${model_dir} \ 
-	--load_worker ${load_worker} \
+	--load_workers ${load_workers} \
 	--chkpt_save ${chkpt_save} 
 	--MLflow_tracking_uri ${MLflow_tracking_uri} \
 	--MLflow_run_name ${MLflow_run_name}
