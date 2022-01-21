@@ -303,7 +303,8 @@ class antab_trainer():
         args=self.args
         net=None
         if model_name=='class':
-            net= ann_models.DenseFF([dsize, dsize,dsize,dsize,dsize//2,dsize//4,1]).to(self.device)
+            net= ann_models.DenseFF([dsize]+hiddenConf+[dsize], nntype='class', dropout=args.dropout).to(self.device) 
+            # net= ann_models.DenseFF([dsize, dsize,dsize,dsize,dsize//2,dsize//4,1]).to(self.device)
         elif model_name=='lstm':
             net= nn.LSTM(dsize, dsize, batch_first=True).to(self.device)
         elif model_name=='autoenc':
@@ -329,7 +330,9 @@ class antab_trainer():
         logger.info("Training starts")
         
         trainConfig={} # holds DS and network and training setup information
-        trainConfig['host']=os.environ['HOSTNAME']
+        # print(os.environ)
+        
+        trainConfig['host']=os.environ['HOSTNAME'] if 'HOSTNAME' in os.environ else ''
         trainConfig['execdir']=os.getcwd()
         
         DS=loaders.antab_loader(root=args.train_dir, 
@@ -338,6 +341,7 @@ class antab_trainer():
                                 target_transform=None,
                                 verbose=args.verbose,
                                 preload=True,
+                                model=args.model
                                 )
 
         Ntrain,Nvalid,Ntest=[int(frac*len(DS)) for frac in args.split]
@@ -385,9 +389,15 @@ class antab_trainer():
             lossfn= nn.L1Loss().to(self.device)
         elif args.loss=='smoothL1':
             lossfn= nn.SmoothL1Loss().to(self.device)
-            
-        if args.model=='class':
+        elif args.loss=='BCELoss':
             lossfn= nn.BCELoss().to(self.device)
+        elif args.loss=='crossent':
+            lossfn= nn.CrossEntropyLoss().to(self.device)
+        
+        if args.model=='class':
+            '''
+            '''
+            # lossfn= nn.BCELoss().to(self.device)
         elif args.model=='lstm':
             lossfn= nn.NLLLoss().to(self.device)
             

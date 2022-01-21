@@ -102,6 +102,8 @@ class antab_loader(Dataset):
             run_mode - ('train', 'inference'), default: 'train'
             
             preload - True/False - preload all data before training
+    
+            model - 'class', 'dense' (default)
         
         Example
         -------
@@ -111,6 +113,7 @@ class antab_loader(Dataset):
         '''
         super().__init__()
 
+            
         self.X=None
         self.Y=None
         
@@ -122,7 +125,7 @@ class antab_loader(Dataset):
         if 'verbose' in kwargs.keys():
             self.verbose=kwargs['verbose']
 
-        self.model='autoenc'
+        self.model='dense'
         if 'model' in kwargs.keys():
             self.model=kwargs['model']
         
@@ -193,7 +196,15 @@ class antab_loader(Dataset):
                 
         
         
-        print(self.X.shape)
+        if self.model=='class':
+            X=self.X.numpy()
+            Y=self.Y.numpy()
+            self.Y=torch.tensor( np.array(np.abs((Y-X)/(X+np.spacing(1)))>0.01,dtype=int) ).float()
+            # print(self.Y[0])
+            # print('preloading for class done')
+            # sys.exit(0)
+
+        # print(self.X.shape)
 
         # self.data=torch.stack(self.data,dim=0)
         print('preloading done')
@@ -321,7 +332,7 @@ class antab_loader(Dataset):
 
         if self.X!=None:
             return self.X[index].float(),self.Y[index].float()
-        
+                
         file_path=self.get_path(index)
 
         status=False
@@ -336,7 +347,8 @@ class antab_loader(Dataset):
             file_path=self.get_path(random.randint(0,len(self.files_list)-1))
 
         if self.model=='class':
-            return x.float(), torch.tensor(y[0]==x[0]).float()
+            # return x.float(), torch.tensor(y[0]==x[0]).float()
+            return x.float(), torch.tensor( np.array(np.abs((y-x)/(x+np.spacing(1)))>0.01,dtype=int) ).float()
         elif self.model=='autoenc':
             return x.float(), x.float()
         elif self.model=='dense':

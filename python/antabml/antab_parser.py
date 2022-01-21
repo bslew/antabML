@@ -113,7 +113,7 @@ USAGE
                             help='loss function name [default: %(default)s]', 
                             required=False,
                             default='smoothL1',
-                            choices=['smoothL1','L1','MSE'])
+                            choices=['smoothL1','L1','MSE','BCELoss','crossent'])
 
         parser.add_argument('--epochs', type=int, help='Number of epochs during training [default: %(default)s]', default=100)
         parser.add_argument('--bs', type=int, help='batch size [default: %(default)s]', default=10000)
