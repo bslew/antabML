@@ -329,6 +329,8 @@ class antab_trainer():
         logger.info("Training starts")
         
         trainConfig={} # holds DS and network and training setup information
+        trainConfig['host']=os.environ['HOSTNAME']
+        trainConfig['execdir']=os.getcwd()
         
         DS=loaders.antab_loader(root=args.train_dir, 
                                 dsize=args.dsize,
@@ -374,6 +376,7 @@ class antab_trainer():
         trainConfig['bs']=args.bs
         trainConfig['epochs']=args.epochs
         trainConfig['model_dir']=args.model_dir
+        trainConfig['model_dir_abs']=os.path.abspath(args.model_dir)
 
         lossfn=None
         if args.loss=='MSE':
