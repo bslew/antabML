@@ -406,6 +406,7 @@ class antab_trainer():
 
         trainConfig['model']=args.model
         trainConfig['dropout']=args.dropout
+        trainConfig['chkpt_save']=args.chkpt_save
         
         net=self.get_model(args.model,args.dsize,trainConfig['denseConf'])
         Nparam,Names=utils.ANN_parameter_count(net, trainable_only=True)
