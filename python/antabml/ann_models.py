@@ -9,6 +9,114 @@ import torch.nn.functional as F
 # import torch.utils.model_zoo as model_zoo
 # import os
 # import sys
+import numpy as np
+
+
+class ResidBlock(nn.Module):
+    def __init__(self,Nin, Nout, NCh=3,stride=1):
+        '''
+        Nin - number of input channels
+        Nout - number of output channels from the block
+        NCh - number of inner channels (or number of output channels
+            from the first Conv1d layer)
+            
+        stride - stride param at first conv1d
+        '''
+        super(ResidBlock, self).__init__()
+        kernel_size=3
+        pad=kernel_size//2
+        self.conv1=nn.Conv1d(in_channels=Nin, out_channels=NCh, 
+                             kernel_size=kernel_size,stride=stride, padding=pad)
+        
+        self.conv2=nn.Conv1d(in_channels=NCh, out_channels=Nout, 
+                             kernel_size=1,stride=1)
+
+        self.bn1=nn.BatchNorm1d(num_features=Nout)
+
+        self.downsample=nn.Sequential(
+            nn.Conv1d(Nin,Nout,kernel_size,stride=stride,padding=pad),
+            self.bn1,
+            )
+        # if stride==1:
+        #     self.downsample=nn.Identity()
+        # else:
+        # self.downsample=nn.AvgPool1d(kernel_size=3,stride=stride, padding='same')
+        
+    def forward(self,x):
+        y=self.conv1(x)
+        y=self.bn1(y)
+        y=F.relu(y)
+        y=self.conv2(y)
+        
+        y=self.downsample(x)+y
+        y=F.relu(y)
+        return y
+
+class ResidPart(nn.Module):
+    def __init__(self, Nblk,Nin,Nout,NCresidBlk,stride=1):
+        '''
+        Nin, Nout, NCresidBlk, stride - passed to residual block
+        
+        Nblk - number of residual blocks in part
+        '''
+        super(ResidPart, self).__init__()
+        self.part=nn.ModuleList()
+        for i in range(Nblk):
+            if i==0:
+                self.part.append(ResidBlock(Nin,Nout,NCh=NCresidBlk,stride=stride))
+            else:
+                self.part.append(ResidBlock(Nout,Nout,NCh=NCresidBlk,stride=1))
+
+    def forward(self,x):
+        for i, b in enumerate(self.part):
+            # print('{} x.shape: {}'.format(i,x.shape))
+            x=b(x)
+            # print('{} y.shape: {}'.format(i,x.shape))
+        return x
+
+class ResidNN(nn.Module):
+    def __init__(self,dsize,Nin=1,part_chs=[16,32,64],Nblk_per_part=3,stride=None):
+        super(ResidNN,self).__init__()
+        
+        self.stride=np.ones(len(part_chs),dtype=int)*2
+        self.stride[0]=1
+        if stride!=None:
+            self.stride=np.array(stride,dtype=int)
+
+        self.Nin=Nin
+        self.dsize=dsize
+        self.Nblk=Nblk_per_part
+        downscale=self.stride.prod()
+        
+        self.net=nn.ModuleList()
+        for i,pc in enumerate(part_chs):
+            if i==0:
+                self.net.append(ResidPart(self.Nblk,self.Nin,pc,pc,stride=self.stride[i]))
+            else:
+                self.net.append(ResidPart(self.Nblk,part_chs[i-1],pc,pc,stride=self.stride[i]))
+        
+        # self.pool=nn.MaxPool1d(kernel_size=2, stride=2)
+        self.pool=nn.AdaptiveAvgPool1d(dsize*downscale)
+        self.lastFC=nn.Sequential(
+            # nn.MaxPool1d(kernel_size=2, stride=2),
+            nn.Linear(dsize*downscale,dsize),
+            )
+              
+    def forward(self,x):
+        for i, p in enumerate(self.net):
+            # print('part: ',i)
+            # print('in: ',x.shape)
+            x=p(x)
+            # print('out: ',x.shape)
+            
+        x=x.view(x.shape[0],1,-1)
+        # print('before pool: ',x.shape)
+        x=self.pool(x)
+        # print('out pool: ',x.shape)
+        x=self.lastFC(x)
+        x=F.softmax(x, dim=-1)
+        return x
+        
 
 class Conv1(nn.Module):
     def __init__(self, conf=[1024,512,256], nntype='conv1d'):

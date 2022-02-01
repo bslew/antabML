@@ -39,12 +39,21 @@ def load_train_wisdom(path, **kwargs):
     '''
     with open(path, 'rb') as f:
         data=pickle.load(f,encoding="latin1")
-    
-    if 'X' not in data.keys():
-        return [],[],False
-    if 'Y' not in data.keys():
-        return [],[],False
-    x,y=np.array(data['X']),np.array(data['Y'])
+
+    if 'ridx' in data.keys():
+        if 'y0' not in data.keys():
+            return [],[],False
+        else:
+            x=np.array(data['y0'])
+            y=np.ones_like(x)
+            ridx=np.array(data['ridx'],dtype=int)
+            y[ridx]=0
+    else:
+        if 'X' not in data.keys():
+            return [],[],False
+        if 'Y' not in data.keys():
+            return [],[],False
+        x,y=np.array(data['X']),np.array(data['Y'])
     # print("Loading {}/{} data points from {}".format(len(x),len(y),path))
     if len(x)!=len(y):
         return x,y,False
@@ -348,7 +357,7 @@ class antab_loader(Dataset):
 
         if self.model=='class':
             # return x.float(), torch.tensor(y[0]==x[0]).float()
-            return x.float(), torch.tensor( np.array(np.abs((y-x)/(x+np.spacing(1)))>0.01,dtype=int) ).float()
+            return x.float(), torch.tensor( np.array(np.abs((y-x)/(x+np.spacing(1)))>0.3,dtype=int) ).float()
         elif self.model=='autoenc':
             return x.float(), x.float()
         elif self.model=='dense':
